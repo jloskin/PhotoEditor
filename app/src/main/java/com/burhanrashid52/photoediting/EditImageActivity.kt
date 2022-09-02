@@ -9,7 +9,9 @@ import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.graphics.Typeface
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
@@ -91,7 +93,11 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
         }
 
     private val Uri.bitmap
-        get() = ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, this))
+        get() = if (Build.VERSION.SDK_INT < 28) {
+            MediaStore.Images.Media.getBitmap(contentResolver, this)
+        } else {
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, this)) { decoder, _, _ -> decoder.isMutableRequired = true }
+        }
 
     @VisibleForTesting
     var mSaveImageUri: Uri? = null
@@ -138,9 +144,10 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
         mSaveFileHelper = FileSaveHelper(this)
     }
 
-    private fun setImageScene(photoUri1: Uri) {
+    private fun setImageScene(uri: Uri) {
         mPhotoEditor?.clearAllViews()
-        mPhotoEditorView?.source?.setImageBitmap(photoUri1.bitmap)
+        val bitmap = uri.bitmap
+        mPhotoEditorView?.source?.setImageBitmap(bitmap)
     }
 
     private fun handleIntentImage(source: ImageView?) {
@@ -363,12 +370,12 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
 
     @SuppressLint("MissingPermission")
     private fun showSaveDialog() {
-        val builder = AlertDialog.Builder(this)
-        builder.setMessage(getString(R.string.msg_save_image))
-        builder.setPositiveButton("Save") { _: DialogInterface?, _: Int -> saveImage() }
-        builder.setNegativeButton("Cancel") { dialog: DialogInterface, _: Int -> dialog.dismiss() }
-        builder.setNeutralButton("Discard") { _: DialogInterface?, _: Int -> finish() }
-        builder.create().show()
+        AlertDialog.Builder(this).apply {
+            setMessage(getString(R.string.msg_save_image))
+            setPositiveButton("Save") { _: DialogInterface?, _: Int -> saveImage() }
+            setNegativeButton("Cancel") { dialog: DialogInterface, _: Int -> dialog.dismiss() }
+            setNeutralButton("Discard") { _: DialogInterface?, _: Int -> finish() }
+        }.create().show()
     }
 
     override fun onFilterSelected(photoFilter: PhotoFilter?) {
@@ -389,8 +396,9 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
                 textEditorDialogFragment.setOnTextEditorListener(object :
                     TextEditorDialogFragment.TextEditorListener {
                     override fun onDone(inputText: String?, colorCode: Int) {
-                        val styleBuilder = TextStyleBuilder()
-                        styleBuilder.withTextColor(colorCode)
+                        val styleBuilder = TextStyleBuilder().apply {
+                            withTextColor(colorCode)
+                        }
                         mPhotoEditor?.addText(inputText, styleBuilder)
                         mTxtCurrentTool?.setText(R.string.label_text)
                     }
@@ -438,9 +446,10 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
             )
             mConstraintSet.clear(rvFilterId, ConstraintSet.END)
         }
-        val changeBounds = ChangeBounds()
-        changeBounds.duration = 350
-        changeBounds.interpolator = AnticipateOvershootInterpolator(1.0f)
+        val changeBounds = ChangeBounds().apply {
+            duration = 350
+            interpolator = AnticipateOvershootInterpolator(1.0f)
+        }
         mRootView?.let { TransitionManager.beginDelayedTransition(it, changeBounds) }
         mConstraintSet.applyTo(mRootView)
     }
