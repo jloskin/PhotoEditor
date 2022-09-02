@@ -70,7 +70,13 @@ internal class PhotoEditorImpl @SuppressLint("ClickableViewAccessibility") const
         drawingView?.enableDrawing(false)
         val multiTouchListener = getMultiTouchListener(isTextPinchScalable)
         val textGraphic =
-            Text(photoEditorView, multiTouchListener, viewState, mDefaultTextTypeface, mGraphicManager)
+            Text(
+                photoEditorView,
+                multiTouchListener,
+                viewState,
+                mDefaultTextTypeface,
+                mGraphicManager
+            )
         textGraphic.buildView(text, styleBuilder)
         addToEditor(textGraphic)
     }
@@ -108,7 +114,13 @@ internal class PhotoEditorImpl @SuppressLint("ClickableViewAccessibility") const
         drawingView?.enableDrawing(false)
         val multiTouchListener = getMultiTouchListener(true)
         val emoji =
-            Emoji(photoEditorView, multiTouchListener, viewState, mGraphicManager, mDefaultEmojiTypeface)
+            Emoji(
+                photoEditorView,
+                multiTouchListener,
+                viewState,
+                mGraphicManager,
+                mDefaultEmojiTypeface
+            )
         emoji.buildView(emojiTypeface, emojiName)
         addToEditor(emoji)
     }
@@ -235,10 +247,10 @@ internal class PhotoEditorImpl @SuppressLint("ClickableViewAccessibility") const
     ) {
         photoEditorView.saveFilter(object : OnSaveBitmap {
             override fun onBitmapReady(saveBitmap: Bitmap?) {
-                val photoSaverTask = PhotoSaverTask(photoEditorView, mBoxHelper)
-                photoSaverTask.setOnSaveBitmap(onSaveBitmap)
-                photoSaverTask.setSaveSettings(saveSettings)
-                photoSaverTask.saveBitmap()
+                PhotoSaverTask(photoEditorView, mBoxHelper).apply {
+                    setOnSaveBitmap(onSaveBitmap)
+                    setSaveSettings(saveSettings)
+                }.saveBitmap()
             }
 
             override fun onFailure(e: Exception?) {
@@ -258,7 +270,7 @@ internal class PhotoEditorImpl @SuppressLint("ClickableViewAccessibility") const
 
     // region Shape
     override fun setShape(shapeBuilder: ShapeBuilder?) {
-        drawingView?.currentShapeBuilder = shapeBuilder
+        drawingView?.currentShapeBuilder = shapeBuilder ?: ShapeBuilder()
     } // endregion
 
     companion object {

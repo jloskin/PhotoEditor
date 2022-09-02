@@ -287,18 +287,23 @@ interface PhotoEditor {
     class Builder(var context: Context, var photoEditorView: PhotoEditorView) {
         @JvmField
         var imageView: ImageView? = null
+
         @JvmField
         var deleteView: View? = null
+
         @JvmField
         var drawingView: DrawingView? = null
+
         @JvmField
         var textTypeface: Typeface? = null
+
         @JvmField
         var emojiTypeface: Typeface? = null
 
         // By default, pinch-to-scale is enabled for text
         @JvmField
         var isTextPinchScalable = true
+
         @JvmField
         var clipSourceImage = false
         fun setDeleteView(deleteView: View?): Builder {
@@ -365,8 +370,8 @@ interface PhotoEditor {
          * @param photoEditorView [PhotoEditorView]
          */
         init {
-            imageView = photoEditorView?.source
-            drawingView = photoEditorView?.drawingView
+            imageView = photoEditorView.source
+            drawingView = photoEditorView.drawingView
         }
     }
 

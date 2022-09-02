@@ -2,21 +2,13 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-
-    compileSdkVersion 31
-
+    compileSdkVersion 32
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 31
+        targetSdkVersion 32
         versionCode 7
         versionName "2.0.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
-        // https://stackoverflow.com/a/69043734
-        configurations.all {
-            resolutionStrategy { force 'androidx.core:core-ktx:1.8.0' }
-        }
-
     }
     buildTypes {
         release {
@@ -30,14 +22,6 @@ android {
             includeAndroidResources = true
         }
     }
-
-    tasks.withType(Javadoc) {
-        options.addStringOption('Xdoclint:none', '-quiet')
-        options.addStringOption('encoding', 'UTF-8')
-        options.addStringOption('charSet', 'UTF-8')
-        failOnError false
-    }
-
 }
 
 dependencies {
@@ -58,14 +42,6 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
-
-ext {
-    PUBLISH_GROUP_ID = 'com.burhanrashid52'
-    PUBLISH_VERSION = '2.0.0'
-    PUBLISH_ARTIFACT_ID = 'photoeditor'
-}
-
-apply from: "${rootProject.projectDir}/scripts/publish-mavencentral.gradle"
 repositories {
     mavenCentral()
 }

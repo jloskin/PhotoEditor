@@ -10,6 +10,7 @@ import android.util.AttributeSet
 import android.util.Pair
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.view.isVisible
 import ja.burhanrashid52.photoeditor.shape.*
 import java.util.*
 
@@ -35,43 +36,35 @@ class DrawingView @JvmOverloads constructor(
     var isDrawingEnabled = false
         private set
     private var viewChangeListener: BrushViewChangeListener? = null
-    var currentShapeBuilder: ShapeBuilder? = null
+    var currentShapeBuilder: ShapeBuilder = ShapeBuilder()
 
     // eraser parameters
     private var isErasing = false
     var eraserSize = DEFAULT_ERASER_SIZE
 
-    // endregion
-    private fun createPaint(): Paint {
-        val paint = Paint()
-        paint.isAntiAlias = true
-        paint.isDither = true
-        paint.style = Paint.Style.STROKE
-        paint.strokeJoin = Paint.Join.ROUND
-        paint.strokeCap = Paint.Cap.ROUND
-        paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_OVER)
-
-        // apply shape builder parameters
-        currentShapeBuilder?.apply {
-            paint.strokeWidth = this.shapeSize
-            paint.alpha = this.shapeOpacity
-            paint.color = this.shapeColor
-        }
-
-        return paint
-    }
-
-    private fun createEraserPaint(): Paint {
-        val paint = createPaint()
-        paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
-        return paint
-    }
-
-    private fun setupBrushDrawing() {
+    init {
         //Caution: This line is to disable hardware acceleration to make eraser feature work properly
         setLayerType(LAYER_TYPE_HARDWARE, null)
-        visibility = GONE
-        currentShapeBuilder = ShapeBuilder()
+        isVisible = false
+    }
+
+    // endregion
+    private fun createPaint(): Paint = Paint().apply {
+        isAntiAlias = true
+        isDither = true
+        style = Paint.Style.STROKE
+        strokeJoin = Paint.Join.ROUND
+        strokeCap = Paint.Cap.ROUND
+        xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_OVER)
+
+        // apply shape builder parameters
+        strokeWidth = currentShapeBuilder.shapeSize
+        alpha = currentShapeBuilder.shapeOpacity
+        color = currentShapeBuilder.shapeColor
+    }
+
+    private fun createEraserPaint(): Paint = createPaint().apply {
+        xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
     }
 
     fun clearAll() {
@@ -85,9 +78,7 @@ class DrawingView @JvmOverloads constructor(
     }
 
     public override fun onDraw(canvas: Canvas) {
-        for (shape in drawShapes) {
-            shape?.shape?.draw(canvas, shape.paint)
-        }
+        drawShapes.forEach { shape -> shape?.shape?.draw(canvas, shape.paint) }
     }
 
     /**
@@ -130,26 +121,16 @@ class DrawingView @JvmOverloads constructor(
     }
 
     private fun createShape() {
-        var paint = createPaint()
-        var shape: AbstractShape = BrushShape()
-
-        if (isErasing) {
-            paint = createEraserPaint()
-        } else {
-            when(currentShapeBuilder?.shapeType){
-                ShapeType.OVAL -> {
-                    shape = OvalShape()
-                }
-                ShapeType.BRUSH -> {
-                    shape = BrushShape()
-                }
-                ShapeType.RECTANGLE -> {
-                    shape = RectangleShape()
-                }
-                ShapeType.LINE -> {
-                    shape = LineShape()
-                }
+        val paint = if (isErasing) createEraserPaint() else createPaint()
+        val shape: AbstractShape = if (!isErasing) {
+            when (currentShapeBuilder.shapeType) {
+                ShapeType.OVAL -> OvalShape()
+                ShapeType.RECTANGLE -> RectangleShape()
+                ShapeType.LINE -> LineShape()
+                ShapeType.BRUSH, null -> BrushShape()
             }
+        } else {
+            BrushShape()
         }
 
         currentShape = ShapeAndPaint(shape, paint)
@@ -213,7 +194,4 @@ class DrawingView @JvmOverloads constructor(
     }
 
     // region constructors
-    init {
-        setupBrushDrawing()
-    }
 }
